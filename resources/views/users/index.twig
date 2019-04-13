@@ -1,0 +1,11 @@
+{% extends '/layouts/app.twig' %}
+
+{% block content %}
+
+    {% for user in users %}
+        <p>
+          <a href="{{ path_for('users.show', {id: user.id}) }}">{{ user.fullName() }}</a>
+        </p>
+    {% endfor %}
+
+{% endblock %}
