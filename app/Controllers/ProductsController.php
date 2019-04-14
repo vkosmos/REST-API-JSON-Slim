@@ -3,6 +3,7 @@
 namespace App\Controllers;
 
 use App\Controller;
+use App\Errors\ExceptionDb;
 use App\Models\Products;
 use PDO;
 
@@ -11,66 +12,117 @@ class ProductsController extends Controller
 
     public function index($request, $responce)
     {
-        $products = Products::findAll();
+        try {
+            $products = Products::findAll();
+        } catch (ExceptionDb $e) {
+            return $responce->withStatus(500);
+        }
 
+        if (!$products){
+            return $responce->withStatus(204);
+        }
         return $responce->withJson($products, 200);
-
-//        $topics = $this->c->db->query('SELECT * FROM products')->fetchAll(PDO::FETCH_CLASS, Products::class);
-//        return $this->c->view->render($responce, 'topics/index.twig', compact('topics'));
-//        return $responce->withJson($topics, 200);
-//        return $responce->withJson(['error' => 'not exist'], 404);
-//        return $this->c->view->render($responce, 'topics/index.twig', compact('topics'));
     }
 
     public function show($request, $responce, $args)
     {
-        $product = Products::findById($args['id']);
+        try {
+            $product = Products::findById($args['id']);
+        } catch (ExceptionDb $e) {
+            return $responce->withStatus(500);
+        }
+
+        if (!$product) {
+            return $responce->withStatus(404);
+        }
         return $responce->withJson($product, 200);
     }
 
     public function create($request, $responce)
     {
+        if ('application/json' != $request->getContentType()) {
+            return $responce->withStatus(415);
+        }
+
         $data = $request->getParsedBody();
 
-        //Проверить все переданные поля
-        if ($data) {
-            $product = new Products();
+        if ($data && isset($data['title']) && isset($data['price'])) {
+
+            try {
+                $product = new Products();
+            } catch (ExceptionDb $e) {
+                return $responce->withStatus(500);
+            }
+
             $product->title = $data['title'];
             $product->description = $data['description'];
             $product->price = $data['price'];
-            $product->save();
-            return $responce->withStatus(200);
+
+            try {
+                $product->save();
+            } catch (ExceptionDb $e) {
+                return $responce->withStatus(500);
+            }
+
+            return $responce->withStatus(201);
         }
 
         return $responce->withStatus(400);
-
-//        $product = Products::findById($args['id']);
-//        $product->delete();
-//        return $responce->withStatus(200);
     }
 
     public function update($request, $responce, $args)
     {
-        $data = $request->getParsedBody();
+        if ('application/json' != $request->getContentType()) {
+            return $responce->withStatus(415);
+        }
 
-        if ($data) {
+        try{
             $product = Products::findById($args['id']);
+        } catch (ExceptionDb $e) {
+            return $responce->withStatus(500);
+        }
+
+        if (!$product) {
+            return $responce->withStatus(404);
+        }
+
+        $data = $request->getParsedBody();
+        if ($data) {
             $product->title = $data['title'];
             $product->description = $data['description'];
             $product->price = $data['price'];
-            $product->save();
-            return $responce->withStatus(200);
+
+            try {
+                $product->save();
+            } catch (ExceptionDb $e) {
+                return $responce->withStatus(500);
+            }
+
+            return $responce->withStatus(204);
         }
 
         return $responce->withStatus(400);
-
     }
 
     public function delete($request, $responce, $args)
     {
-        $product = Products::findById($args['id']);
-        $product->delete();
-        return $responce->withStatus(200);
+        try{
+            $product = Products::findById($args['id']);
+        } catch (ExceptionDb $e) {
+            return $responce->withStatus(500);
+        }
+
+        if (!$product) {
+            return $responce->withStatus(404);
+        }
+
+        try {
+            $product->delete();
+        } catch (ExceptionDb $e) {
+            return $responce->withStatus(500);
+        }
+
+        return $responce->withStatus(204);
     }
 
 

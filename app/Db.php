@@ -29,8 +29,6 @@ class Db
             throw $dbError;
         }
 
-        //Данная строчка внесена, чтобы справиться с ошибкой PDO при подстановке параметров в запросы с LIMIT
-        $this->dbh->setAttribute(\PDO::ATTR_EMULATE_PREPARES, false);
     }
 
     /**
